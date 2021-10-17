@@ -1,0 +1,136 @@
+import json
+import threading
+import socket
+import sys
+import os
+from rich import print
+from rich.panel import Panel
+from datetime import datetime
+from playsound import playsound
+from rich.console import Console
+from cryptography.fernet import Fernet
+from time import sleep
+
+def convert_ip_port(str1):
+    str1 = str1.replace('@', '1')
+    str1 = str1.replace('#', '2')
+    str1 = str1.replace('%', '3')
+    str1 = str1.replace('$', '4')
+    str1 = str1.replace('*', '5')
+    str1 = str1.replace('^', '6')
+    str1 = str1.replace('-', '7')
+    str1 = str1.replace('&', '8')
+    str1 = str1.replace('R', '9')
+    str1 = str1.replace('H', '0')
+    str1 = str1.replace('!', '.')
+    return str1
+
+def data_to_github():
+    global ip, port, key
+    os.system("rm -rf simple")
+    os.system("git clone https://github.com/IHA-arch/simple.git")
+    with open('simple/simple.json', 'r') as openfile:
+        data = json.load(openfile)
+    getip = data['dist']
+    ip = convert_ip_port(getip)
+    getport = data['long']
+    port = convert_ip_port(getport)
+    key = data['connection']
+    print("///////////////////////////////////")
+    print("IP:", ip)
+    print("PORT:", port)
+    print("KEY:", key)
+    print("///////////////////////////////////")
+    war = "[red] About 500 characters can be sent to the message/file otherwise the connection may be lost"
+    print(Panel(war, title='☠️ ☠️  WARNING ☠️ ☠️ ', style='bold'))
+
+def sender(client):
+    while True:
+        data = input("")
+        #data1 = bytes(data, 'utf-8')
+        if data == "sss":
+            name = input("Enter file name:")
+            try:
+                ss = open(name, 'r')
+                data = ss.read()
+            except:
+                print("file '",name,"' not found")
+                data = "<><><><><><><><><><><><><>"
+        now = datetime.now()
+        time = now.strftime("%H:%M:%S")
+        name = '[red]You | '
+        nt = name + time
+        os.system('printf "\033[0;1;31m"')
+        print(Panel(data, title=nt, width=30, style='bold'))
+        fernet = Fernet(key)
+        msg = fernet.encrypt(data.encode())
+        client.send(msg)
+
+def reciver(client):
+    while True:
+        data = client.recv(1024)
+        if not data:
+            print("Lost connection from server")
+            break
+        fernet = Fernet(key)
+        msg = fernet.decrypt(data).decode()
+        #data1 = str(data, 'utf-8')
+        #print(data1)
+        now = datetime.now()
+        time = now.strftime("%H:%M:%S")
+        print("\n")
+        name = '[blue]' + name1 + ' | '
+        nt = name + time
+        os.system('printf "\033[0;1;31m"')
+        mssg = "[red]" + msg
+        print(Panel(mssg, title=nt, width=30, style='bold'))
+        playsound('recive.mp3')
+
+
+
+try:
+    client=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print("socket creating successfully")
+except:
+    print("An error when creating socket")
+
+data_to_github()
+
+#ip = input("IP:")
+#port = int(input("PORT:"))
+console = Console()
+
+datas = [1]
+with console.status("Connecting...") as status:
+    while datas:
+        data = datas.pop(0)
+        sleep(5)
+
+try:
+    client.connect((ip, int(port)))
+    print("Connected to the server")
+except socket.error as error:
+    print("Connection not established")
+
+#key1 = input("Secret key:")
+key1 = key
+key = bytes(key1, 'utf-8')
+
+name = client.recv(1024)
+name1 = str(name, 'utf-8')
+sleep(0.5)
+yn = input("Enter your name:")
+yn1 = bytes(yn, 'utf-8')
+console = Console()
+datas = [1]
+with console.status("Sending request...", spinner='aesthetic') as status:
+    while datas:
+        data = datas.pop(0)
+        sleep(5)
+print("Request accept")
+client.send(yn1)
+
+sendingThread = threading.Thread(target=reciver, args=(client,))
+sendingThread.start()
+recivingThread = threading.Thread(target=sender, args=(client,))
+recivingThread.start()
