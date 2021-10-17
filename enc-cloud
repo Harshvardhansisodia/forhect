@@ -1,0 +1,18 @@
+import socket
+from tkinter import *
+
+client= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+ip = input("IP:")
+port= int(input("PORT:"))
+client.connect((ip, port))
+while True:
+    print("wait...")
+    s = client.recv(1024)
+    f = open(s,"wb")
+    print(str(s, 'utf-8'), "recive")
+    condition = True
+    while condition:
+        image = client.recv(1024)
+        if str(image) == "b''":
+            condition = False
+        f.write(image)
